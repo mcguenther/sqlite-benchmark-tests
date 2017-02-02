@@ -87,3 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+
+# project settings
+benchmark/
+sqlite-source/
+sqlite_benchmark.db*
