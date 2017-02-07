@@ -5,6 +5,8 @@ import zipfile
 import urllib
 import time
 import getopt
+import json
+import datetime
 
 def main(argv):
 	config_file = ''
@@ -30,16 +32,19 @@ def main(argv):
 		print help_str()
 		sys.exit(2)
 
-	bmk = SQLiteBenchmarker(base_dir=base_dir)
-	bmk.set_config(config_file)
+	bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=config_file)
 	bmk.compile()
 	bmk.run_benchmark()
 
 
 class SQLiteBenchmarker:
-	def __init__(self, base_dir):
+	def __init__(self, base_dir, config_file):
 		self.base_dir = base_dir
+		self.config_file = config_file
 
+		with open(self.config_file) as json_data:
+			self.config = json.load(json_data)
+			print("config:\n" + str(self.config) + "\n")
 
 		## get source
 		source_exists = os.path.isfile(os.path.join(self.base_dir, 'sqlite-source', 'sqlite3.c'))
@@ -81,18 +86,33 @@ class SQLiteBenchmarker:
 		print('Finished initialising.')
 
 
-	def set_config(self, file):
-		pass
 
 	def compile(self):
 		## compile source
 		print('Compiling source')
 		os.chdir(os.path.join(self.base_dir, 'sqlite-source'))
-		os.system("gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl")
+		compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
+
+
+		features = self.config["features"]
+
+		for option, value in features.items():
+			add_string = " -D"
+			if value is None:
+				add_string += option
+			else:
+				add_string += option + "=" + str(value)
+
+			compile_command += add_string
+
+		print("compiling: " + compile_command)
+		os.system(compile_command)
 		print('Finished compiling')
 
 
 	def run_benchmark(self):
+		self.measurements = {}
+
 		os.chdir(os.path.join(self.bm_path, 'pytpcc'))
 		os.system('python tpcc.py --print-config sqlite > ' + self.bm_config_path)
 		#adjust config
@@ -111,19 +131,29 @@ class SQLiteBenchmarker:
 								+ os.pathsep + os.environ["PATH"]
 		## start benchmark
 		print('starting benchmark')
-		self.last_start = cur_milli()
-		print('##>>' + milli_str(self.last_start) + '>>') # print time in milliseconds
-		os.system("python tpcc.py --reset --config=sqlite.config sqlite --debug") 
-		self.last_finish = cur_milli() 
-		print('##<<' + milli_str(self.last_finish) + '<<') # print time in milliseconds
+		self.measurements["start_human_readable"] = datetime.datetime.now().isoformat()
+		self.measurements["start"] = cur_milli()
+		print('##>>' + milli_str(self.measurements["start"]) + '>>') # print time in milliseconds
+		
+		#os.system("python tpcc.py --reset --config=sqlite.config sqlite --debug") 
+		time.sleep(1.5)
+		self.measurements["finish"] = cur_milli() 
+		print('##<<' + milli_str(self.measurements["finish"]) + '<<') # print time in milliseconds
+		self.measurements["cost_in_seconds"] = round((self.measurements["finish"] - self.measurements["start"])/100)/10
 		print('benchmark finished')
 
-		#TODO create result JSON 
-		self.write_result(0)
 
-	def write_result(self, json):
+
+		self.config["measurements"] = self.measurements
+
+		self.write_result()
+
+	def write_result(self):
 		print('Appending result to original config file.')
-		pass
+		with open(self.config_file, 'w') as f:
+			f.seek(0)
+			f.write(json.dumps(self.config, indent=4, sort_keys=True))
+			f.truncate()
 
 
 def cur_milli():
