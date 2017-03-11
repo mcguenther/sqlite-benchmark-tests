@@ -14,9 +14,9 @@ def main(argv):
 	found_config = False
 	try:
 		opts, args = getopt.getopt(argv,"wc:h",["workingdir","configfile=","help"])
-	except getopt.GetoptError, err:
+	except (getopt.GetoptError, err):
 		print(str(err))
-		print help_str()
+		print(help_str())
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt in ("-w", "--workingdir"):
@@ -25,11 +25,11 @@ def main(argv):
 			config_file = os.path.abspath(arg)
 			found_config = True
 		else:
-			print help_str()
+			print (help_str())
 			sys.exit(2)
 
 	if not found_config:
-		print help_str()
+		print (help_str())
 		sys.exit(2)
 
 	bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=config_file)
@@ -48,7 +48,7 @@ class SQLiteBenchmarker:
 
 		## get source
 		source_exists = os.path.isfile(os.path.join(self.base_dir, 'sqlite-source', 'sqlite3.c'))
-		zip_sqlite_exists = os.path.isfile('sqlite-amalgamation-3160200.zip') 
+		zip_sqlite_exists = os.path.isfile('sqlite-amalgamation-3160200.zip')
 
 		if not source_exists:
 			print('Getting sqlite source')
@@ -86,25 +86,19 @@ class SQLiteBenchmarker:
 		print('Finished initialising.')
 
 
-
 	def compile(self):
 		## compile source
 		print('Compiling source')
 		os.chdir(os.path.join(self.base_dir, 'sqlite-source'))
 		compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
-
-
 		features = self.config["features"]
-
 		for option, value in features.items():
 			add_string = " -D"
 			if value is None:
 				add_string += option
 			else:
 				add_string += option + "=" + str(value)
-
 			compile_command += add_string
-
 		print("compiling: " + compile_command)
 		os.system(compile_command)
 		print('Finished compiling')
@@ -112,7 +106,6 @@ class SQLiteBenchmarker:
 
 	def run_benchmark(self):
 		self.measurements = {}
-
 		os.chdir(os.path.join(self.bm_path, 'pytpcc'))
 		os.system('python tpcc.py --print-config sqlite > ' + self.bm_config_path)
 		#adjust config
@@ -134,16 +127,13 @@ class SQLiteBenchmarker:
 		self.measurements["start_human_readable"] = datetime.datetime.now().isoformat()
 		self.measurements["start"] = cur_milli()
 		print('##>>' + milli_str(self.measurements["start"]) + '>>') # print time in milliseconds
-		
-		#os.system("python tpcc.py --reset --config=sqlite.config sqlite --debug") 
+
+		#os.system("python tpcc.py --reset --config=sqlite.config sqlite --debug")
 		time.sleep(1.5)
-		self.measurements["finish"] = cur_milli() 
+		self.measurements["finish"] = cur_milli()
 		print('##<<' + milli_str(self.measurements["finish"]) + '<<') # print time in milliseconds
 		self.measurements["cost_in_seconds"] = round((self.measurements["finish"] - self.measurements["start"])/100)/10
 		print('benchmark finished')
-
-
-
 		self.config["measurements"] = self.measurements
 
 		self.write_result()
@@ -166,6 +156,7 @@ def cur_milli_str():
 
 def milli_str(milli):
 	return str(int(round(milli)))
+
 
 def help_str():
 	return "USAGE: sqlite-bmk.py -c compile-conf.json"

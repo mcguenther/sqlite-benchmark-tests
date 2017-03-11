@@ -93,3 +93,4 @@ ENV/
 benchmark/
 sqlite-source/
 sqlite_benchmark.db*
+compile-configs/

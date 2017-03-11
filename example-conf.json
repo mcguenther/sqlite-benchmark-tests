@@ -3,9 +3,9 @@
         "SQLITE_CASE_SENSITIVE_LIKE": null
     }, 
     "measurements": {
-        "cost_in_time": 1.5, 
-        "finish": 1486491204904.795, 
-        "start": 1486491203403.2222, 
-        "start_human_readable": "2017-02-07T19:13:23.403175"
+        "cost_in_seconds": 1.5, 
+        "finish": 1488709251629.543, 
+        "start": 1488709250128.241, 
+        "start_human_readable": "2017-03-05T10:20:50.128175"
     }
 }
