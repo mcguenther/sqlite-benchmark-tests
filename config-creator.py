@@ -12,18 +12,23 @@ import random
 def main(argv):
 	options_file = ''
 	base_dir=os.path.abspath(os.getcwd())
+	num_random = 30
 	found_options = False
 	try:
-		opts, args = getopt.getopt(argv,"o:wh",["optionsfile=","workingdir","help"])
+		opts, args = getopt.getopt(argv,"o:whr:",["optionsfile=","workingdir","help", "num-random="])
 	except (getopt.GetoptError, err):
 		print(str(err))
 		print(help_str())
 		sys.exit(2)
+	print(opts)
 	for opt, arg in opts:
 		if opt in ("-w", "--workingdir"):
 			base_dir = os.path.abspath(arg)
 		elif opt in ("-o", "--optionsfile"):
 			options_file = os.path.abspath(arg)
+			found_options = True
+		elif opt in ("-r", "--num-random"):
+			num_random = arg
 			found_options = True
 		else:
 			print (help_str())
@@ -35,7 +40,10 @@ def main(argv):
 		sys.exit(2)
 
 	generator = ConfigCreator(base_dir=base_dir,options_file=options_file)
-	generator.generate_set_randomly(5)
+
+	#non_default = generator.generate_non_default_single_option("SQLITE_TEMP_STORE")
+	generator.generate_and_write_one_for_each_option()
+	generator.generate_set_randomly(int(num_random))
 
 
 
@@ -44,6 +52,8 @@ class ConfigCreator:
 		self.base_dir = base_dir
 		self.options_file = options_file
 
+		print("base" + self.base_dir)
+		print("options_file" + self.options_file)
 		with open(self.options_file) as json_data:
 			json_data = json.load(json_data)
 			self.options = self.parse_options(json_data)
@@ -64,7 +74,6 @@ class ConfigCreator:
 			#  - range options (can take any value inside a range, using a given step size)
 
 			for option, value in json_options.items():
-
 				val_dict = {}
 				print(option + "=" + str(value))
 				if value is None:
@@ -91,11 +100,10 @@ class ConfigCreator:
 		options = possible_options
 		return options
 
-	def generate_one_for_each_option(self):
-		pass
 
-
-	def write_config(self, config):
+	def write_config(self,
+		config,
+		suffix = ""):
 		#print('writing new config file')
 		#print("generating config wrapper")
 		config_wrapper = {}
@@ -108,6 +116,8 @@ class ConfigCreator:
 		if not config_folder_exists:
 			os.mkdir(config_folder)
 		config_file_name = "config_"
+		if suffix is not "":
+			config_file_name += suffix + "_"
 		config_file_name += str(hash(json_conf))
 		complete_path = os.path.join(config_folder, config_file_name)
 		complete_path +=  ".cfg"
@@ -121,22 +131,57 @@ class ConfigCreator:
 		#print(self.options)
 		rand_conf = {}
 		for feature, f_desc in self.options.items():
-			possible_values = f_desc["values"]
-			val = random.choice(possible_values)
-			print(str(feature) + " = " + str(val))
-			rand_conf[feature] = val
+			if f_desc is None:
+				#unary option
+				on = bool(random.getrandbits(1))
+				if on:
+					rand_conf[feature] = None
+			else:
+				possible_values = f_desc["values"]
+				val = random.choice(possible_values)
+				print(str(feature) + " = " + str(val))
+				rand_conf[feature] = val
 		return rand_conf
 
 
 	def generate_set_randomly(self,num):
 		for i in range(num):
-			self.generate_rand_and_save()
+			self.generate_rand_and_write()
 
 
-	def generate_rand_and_save(self):
+	def generate_rand_and_write(self):
 		random_config = self.generate_randomly()
-		self.write_config(random_config)
+		self.write_config(random_config, suffix="rnd")
 
+
+	def generate_and_write_one_for_each_option(self):
+		for options in self.options:
+			non_default_option = self.generate_non_default_single_option(options)
+			self.write_config(non_default_option, suffix=options)
+
+
+	def generate_non_default_single_option(self, option):
+		if option not in self.options:
+			raise ValueError('Can find no non-default value for option ' +
+				option + " since it is not in the parsed set of options")
+		option_desc = self.options[option]
+		print(option_desc)
+		possible_vals= []
+
+		if option_desc is None:
+			# unary option
+			possible_vals = [None]
+		else:
+			val_default = option_desc["default"]
+			possible_vals = option_desc["values"]
+			if val_default in possible_vals:
+				possible_vals.remove(val_default)
+
+		val = random.choice(possible_vals)
+		print(str(option) + " = " + str(val))
+		rand_conf = {}
+		rand_conf[option] = val
+		return rand_conf
 
 def cur_milli():
 	return time.time()*1000

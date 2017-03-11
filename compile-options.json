@@ -10,8 +10,18 @@
       "min": 0,
       "max": 3,
       "stepsize": 1,
-      "default": 0
-    }
+      "default": 1
+    },
+    "SQLITE_ALLOW_COVERING_INDEX_SCAN": {
+      "type": "list",
+      "values": [0,1],
+      "default": 1
+    },
+    "SQLITE_ENABLE_MEMORY_MANAGEMENT": null,
+    "SQLITE_OMIT_AUTOMATIC_INDEX": null,
+    "SQLITE_DEBUG": null,
+    "SQLITE_MEMDEBUG": null,
+    "SQLITE_ENABLE_SESSION": null
   },
   "ommitted-options": {
     "SQLITE_ALLOW_URI_AUTHORITY": null,
