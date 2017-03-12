@@ -8,19 +8,21 @@ import getopt
 import json
 import datetime
 import random
+import shutil
 
 def main(argv):
 	options_file = ''
 	base_dir=os.path.abspath(os.getcwd())
 	num_random = 30
 	found_options = False
+	cleanonly = False
 	try:
-		opts, args = getopt.getopt(argv,"o:whr:",["optionsfile=","workingdir","help", "num-random="])
+		opts, args = getopt.getopt(argv,"o:whr:",["optionsfile=","workingdir","help", "num-random=", "clean"])
 	except (getopt.GetoptError, err):
 		print(str(err))
 		print(help_str())
 		sys.exit(2)
-	print(opts)
+
 	for opt, arg in opts:
 		if opt in ("-w", "--workingdir"):
 			base_dir = os.path.abspath(arg)
@@ -30,10 +32,15 @@ def main(argv):
 		elif opt in ("-r", "--num-random"):
 			num_random = arg
 			found_options = True
+		elif opt == "--clean":
+			cleanonly = True
 		else:
 			print (help_str())
 			sys.exit(2)
 
+	if cleanonly:
+		ConfigCreator.clean(base_dir)
+		sys.exit(1)
 
 	if not found_options:
 		print (help_str())
@@ -52,12 +59,12 @@ class ConfigCreator:
 		self.base_dir = base_dir
 		self.options_file = options_file
 
-		print("base" + self.base_dir)
-		print("options_file" + self.options_file)
+		#print("base" + self.base_dir)
+		#print("options_file" + self.options_file)
 		with open(self.options_file) as json_data:
 			json_data = json.load(json_data)
 			self.options = self.parse_options(json_data)
-			print("avaliable options:\n" + str(self.options) + "\n")
+			#print("avaliable options:\n" + str(self.options) + "\n")
 		print('Finished initialising.')
 
 
@@ -65,7 +72,7 @@ class ConfigCreator:
 		options = {}
 		possible_options = {}
 		if "compile-options" in json:
-			print("found correct file")
+			#print("found correct file")
 			json_options = json["compile-options"]
 
 			# We allow
@@ -75,7 +82,7 @@ class ConfigCreator:
 
 			for option, value in json_options.items():
 				val_dict = {}
-				print(option + "=" + str(value))
+				#print(option + "=" + str(value))
 				if value is None:
 					# unary option
 						possible_options[option] = None
@@ -121,7 +128,7 @@ class ConfigCreator:
 		config_file_name += str(hash(json_conf))
 		complete_path = os.path.join(config_folder, config_file_name)
 		complete_path +=  ".cfg"
-		print(complete_path)
+		#print(complete_path)
 		with open(complete_path, 'w') as f:
 			f.seek(0)
 			f.write(json_conf)
@@ -139,7 +146,7 @@ class ConfigCreator:
 			else:
 				possible_values = f_desc["values"]
 				val = random.choice(possible_values)
-				print(str(feature) + " = " + str(val))
+				#print(str(feature) + " = " + str(val))
 				rand_conf[feature] = val
 		return rand_conf
 
@@ -165,7 +172,7 @@ class ConfigCreator:
 			raise ValueError('Can find no non-default value for option ' +
 				option + " since it is not in the parsed set of options")
 		option_desc = self.options[option]
-		print(option_desc)
+		#print(option_desc)
 		possible_vals= []
 
 		if option_desc is None:
@@ -178,10 +185,21 @@ class ConfigCreator:
 				possible_vals.remove(val_default)
 
 		val = random.choice(possible_vals)
-		print(str(option) + " = " + str(val))
+		#print(str(option) + " = " + str(val))
 		rand_conf = {}
 		rand_conf[option] = val
 		return rand_conf
+
+
+	@staticmethod
+	def clean(base_dir):
+		cfg_path = os.path.join(base_dir, 'compile-configs')
+		try:
+			if os.path.exists(cfg_path):
+				shutil.rmtree(cfg_path)
+		except:
+			print("Couldnt delete files")
+
 
 def cur_milli():
 	return time.time()*1000

@@ -2,9 +2,31 @@
   "compile-options":{
     "SQLITE_THREADSAFE": {
       "type": "list",
-      "values": [1,2,3],
+      "values": [0,1,2],
       "default": 1
     },
+    "SQLITE_DEFAULT_MEMSTATUS": {
+      "type": "list",
+      "values": [0,1],
+      "default": 1
+    },
+    "SQLITE_DEFAULT_PAGE_SIZE": {
+      "type": "list",
+      "values": [512, 1024, 2048, 4096, 8192, 16384, 32768],
+      "default": 4096
+    },
+    "SQLITE_DEFAULT_WAL_SYNCHRONOUS": {
+      "type": "range",
+      "min": 0,
+      "max": 3,
+      "stepsize": 1,
+      "default": 2
+    },
+    "SQLITE_LIKE_DOESNT_MATCH_BLOBS": null,
+    "SQLITE_OMIT_DECLTYPE": null,
+    "SQLITE_OMIT_DEPRECATED": null,
+    "SQLITE_OMIT_PROGRESS_CALLBACK": null,
+    "SQLITE_OMIT_SHARED_CACHE": null,
     "SQLITE_TEMP_STORE": {
       "type": "range",
       "min": 0,
@@ -21,7 +43,8 @@
     "SQLITE_OMIT_AUTOMATIC_INDEX": null,
     "SQLITE_DEBUG": null,
     "SQLITE_MEMDEBUG": null,
-    "SQLITE_ENABLE_SESSION": null
+    "SQLITE_DISABLE_LFS": null,
+    "SQLITE_ENABLE_API_ARMOR": null
   },
   "ommitted-options": {
     "SQLITE_ALLOW_URI_AUTHORITY": null,
@@ -223,7 +246,15 @@
     "SQLITE_SYSCALL": null,
     "SQLITE_TCLAPI": null,
     "SQLITE_DEFAULT_FILE_PERMISSIONS=N": null,
-    "SQLITE_DEFAULT_LOOKASIDE=SZ,N": null
+    "SQLITE_DEFAULT_LOOKASIDE=SZ,N": null,
+    "SQLITE_MAX_EXPR_DEPTH=0": {
+      "type": "range",
+      "min": 0,
+      "max": 4000,
+      "stepsize": 100,
+      "default": 1000
+    },
+    "SQLITE_ENABLE_SESSION": null
   }
 
 }

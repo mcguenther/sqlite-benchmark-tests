@@ -2,18 +2,21 @@
 import sys
 import os
 import zipfile
-import urllib
+import urllib.request as request
 import time
 import getopt
 import json
 import datetime
+import shutil
+import subprocess
 
 def main(argv):
 	config_file = ''
 	base_dir=os.path.abspath(os.getcwd())
 	found_config = False
+	cleanonly = False
 	try:
-		opts, args = getopt.getopt(argv,"wc:h",["workingdir","configfile=","help"])
+		opts, args = getopt.getopt(argv,"wc:h",["workingdir","configfile=","help", "clean="])
 	except (getopt.GetoptError, err):
 		print(str(err))
 		print(help_str())
@@ -24,17 +27,27 @@ def main(argv):
 		elif opt in ("-c", "--configfile"):
 			config_file = os.path.abspath(arg)
 			found_config = True
+		elif opt == "--clean":
+			cleanonly = True
 		else:
 			print (help_str())
 			sys.exit(2)
+
+	if cleanonly:
+		SQLiteBenchmarker.clean(base_dir)
+		sys.exit(1)
 
 	if not found_config:
 		print (help_str())
 		sys.exit(2)
 
+	print("\n__ Starting new benchmark __")
 	bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=config_file)
-	bmk.compile()
-	bmk.run_benchmark()
+	c_result = bmk.compile()
+	if c_result is 0:
+		bmk.run_benchmark()
+	else:
+		sys.exit(2)
 
 
 class SQLiteBenchmarker:
@@ -44,7 +57,7 @@ class SQLiteBenchmarker:
 
 		with open(self.config_file) as json_data:
 			self.config = json.load(json_data)
-			print("config:\n" + str(self.config) + "\n")
+			print("config:" + str(self.config))
 
 		## get source
 		source_exists = os.path.isfile(os.path.join(self.base_dir, 'sqlite-source', 'sqlite3.c'))
@@ -53,7 +66,7 @@ class SQLiteBenchmarker:
 		if not source_exists:
 			print('Getting sqlite source')
 			if not zip_sqlite_exists:
-				urllib.urlretrieve ("https://sqlite.org/2017/sqlite-amalgamation-3160200.zip", "sqlite-amalgamation-3160200.zip")
+				request.urlretrieve ("https://sqlite.org/2017/sqlite-amalgamation-3160200.zip", "sqlite-amalgamation-3160200.zip")
 			zip_ref = zipfile.ZipFile('sqlite-amalgamation-3160200.zip', 'r')
 			zip_ref.extractall('./')
 			zip_ref.close()
@@ -73,7 +86,7 @@ class SQLiteBenchmarker:
 		if not bm_exists:
 			print('Getting benchmark')
 			if not zip_bm_exists:
-				urllib.urlretrieve ("https://github.com/apavlo/py-tpcc/archive/master.zip", path_to_bm_zip)
+				request.urlretrieve ("https://github.com/apavlo/py-tpcc/archive/master.zip", path_to_bm_zip)
 			bm_tmp_path = os.path.join(self.base_dir, 'benchmark-tmp')
 			zip_ref = zipfile.ZipFile(path_to_bm_zip, 'r')
 			zip_ref.extractall(bm_tmp_path)
@@ -100,9 +113,9 @@ class SQLiteBenchmarker:
 				add_string += option + "=" + str(value)
 			compile_command += add_string
 		print("compiling: " + compile_command)
-		os.system(compile_command)
+		c_result = os.system(compile_command)
 		print('Finished compiling')
-
+		return c_result
 
 	def run_benchmark(self):
 		self.measurements = {}
@@ -128,15 +141,16 @@ class SQLiteBenchmarker:
 		self.measurements["start"] = cur_milli()
 		print('##>>' + milli_str(self.measurements["start"]) + '>>') # print time in milliseconds
 
-		#os.system("python tpcc.py --reset --config=sqlite.config sqlite --debug")
-		time.sleep(1.5)
+		benchmark_command = "python tpcc.py --reset --config=sqlite.config sqlite --debug"
+		#proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
+		#(out, err) = proc.communicate()
+		time.sleep(1)
 		self.measurements["finish"] = cur_milli()
 		print('##<<' + milli_str(self.measurements["finish"]) + '<<') # print time in milliseconds
 		self.measurements["cost_in_seconds"] = round((self.measurements["finish"] - self.measurements["start"])/100)/10
-		print('benchmark finished')
 		self.config["measurements"] = self.measurements
-
 		self.write_result()
+		print('__ benchmark finished __\n\n')
 
 	def write_result(self):
 		print('Appending result to original config file.')
@@ -144,6 +158,22 @@ class SQLiteBenchmarker:
 			f.seek(0)
 			f.write(json.dumps(self.config, indent=4, sort_keys=True))
 			f.truncate()
+
+
+	@staticmethod
+	def clean(base_dir):
+		bmk_path = os.path.join(base_dir, 'benchmark')
+		src_path = os.path.join(base_dir, 'sqlite-source')
+		db_path = os.path.join(base_dir, 'sqlite_benchmark.db')
+		try:
+			if os.path.exists(bmk_path):
+				shutil.rmtree(bmk_path)
+			if os.path.exists(src_path):
+				shutil.rmtree(src_path)
+			if os.path.exists(db_path):
+				os.remove(db_path)
+		except err:
+			print("Couldnt delete files.")
 
 
 def cur_milli():
