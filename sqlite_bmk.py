@@ -142,9 +142,9 @@ class SQLiteBenchmarker:
 		print('##>>' + milli_str(self.measurements["start"]) + '>>') # print time in milliseconds
 
 		benchmark_command = "python tpcc.py --reset --config=sqlite.config sqlite --debug"
-		#proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
-		#(out, err) = proc.communicate()
-		time.sleep(1)
+		proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
+		(out, err) = proc.communicate()
+		#time.sleep(1)
 		self.measurements["finish"] = cur_milli()
 		print('##<<' + milli_str(self.measurements["finish"]) + '<<') # print time in milliseconds
 		self.measurements["cost_in_seconds"] = round((self.measurements["finish"] - self.measurements["start"])/100)/10
