@@ -18,9 +18,10 @@ def main(argv):
 	options_file = ''
 	base_dir=os.path.abspath(os.getcwd())
 	num_random = 100
+	num_cycles = 3
 	found_options = False
 	try:
-		opts, args = getopt.getopt(argv,"o:hf:r:",["optionsfile=", "help", "fresh-start", "clean=", "random="])
+		opts, args = getopt.getopt(argv,"o:hf:r:c:",["optionsfile=", "help", "fresh-start", "clean=", "random=", "cycles="])
 	except (getopt.GetoptError, err):
 		print(str(err))
 		print(help_str())
@@ -39,6 +40,9 @@ def main(argv):
 			found_options = True
 		elif opt in ("-r", "--random"):
 			num_random = int(arg)
+			found_options = True
+		elif opt in ("-c", "--cycles"):
+			num_cycles = int(arg)
 		else:
 			print (help_str())
 			sys.exit(2)
@@ -59,13 +63,12 @@ def main(argv):
 		abs_file = os.path.join(config_folder, filename)
 		print("\n\n__ Starting new benchmark " + str(i) + "/" + str(file_num) + " (" + str(round(100*i/file_num)) + "%) __")
 		print("config file \"" + filename + "\"")
-		bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=abs_file)
+		bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=abs_file, num_cycles = num_cycles)
 		c_result = bmk.compile()
 		i += 1
 		if c_result is 0:
 			bmk.run_benchmark()
 		else:
-			#sys.exit(2)
 			continue
 
 

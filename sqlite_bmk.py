@@ -15,8 +15,9 @@ def main(argv):
 	base_dir=os.path.abspath(os.getcwd())
 	found_config = False
 	cleanonly = False
+	num_cycles = 3
 	try:
-		opts, args = getopt.getopt(argv,"wc:h",["workingdir","configfile=","help", "clean="])
+		opts, args = getopt.getopt(argv,"wc:h",["workingdir","configfile=","help", "clean=", "cycles="])
 	except (getopt.GetoptError, err):
 		print(str(err))
 		print(help_str())
@@ -29,6 +30,9 @@ def main(argv):
 			found_config = True
 		elif opt == "--clean":
 			cleanonly = True
+			found_config = True
+		elif opt == "--cycles":
+			num_cycles = int(arg)
 		else:
 			print (help_str())
 			sys.exit(2)
@@ -42,7 +46,7 @@ def main(argv):
 		sys.exit(2)
 
 	print("\n__ Starting new benchmark __")
-	bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=config_file)
+	bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=config_file, num_cycles = num_cycles)
 	c_result = bmk.compile()
 	if c_result is 0:
 		bmk.run_benchmark()
@@ -51,37 +55,53 @@ def main(argv):
 
 
 class SQLiteBenchmarker:
-	def __init__(self, base_dir, config_file):
+	def __init__(self, base_dir, config_file, num_cycles):
 		self.base_dir = base_dir
 		self.config_file = config_file
+		self.num_cycles = num_cycles
+
+		url_sqlite_source = "https://sqlite.org/2017/sqlite-amalgamation-3160200.zip"
+		name_local_zip = "sqlite-amalgamation-3160200.zip"
+		name_expected_folder_in_zip = 'sqlite-amalgamation-3160200'
+		name_desired_folder_source = 'sqlite-source'
+		name_expected_source_file = 'sqlite3.c'
+		name_local_zip_benchmarking_tool = "py-tpcc-master.zip"
+		name_desired_folder_benchmark = "benchmark"
+		name_expected_sub_folder_inside_benchmark = "pytpcc"
+		name_expected_benchmark_file = "tpcc.py"
+		name_expected_benchmark_internal_config_file = "sqlite.config"
+		name_local_bmk_db = 'sqlite_benchmark.db'
 
 		with open(self.config_file) as json_data:
 			self.config = json.load(json_data)
 			print("config:" + str(self.config))
 
 		## get source
-		source_exists = os.path.isfile(os.path.join(self.base_dir, 'sqlite-source', 'sqlite3.c'))
-		zip_sqlite_exists = os.path.isfile('sqlite-amalgamation-3160200.zip')
+		source_exists = os.path.isfile(os.path.join(self.base_dir, name_desired_folder_source, name_expected_source_file))
+		zip_sqlite_exists = os.path.isfile(name_local_zip)
 
 		if not source_exists:
 			print('Getting sqlite source')
 			if not zip_sqlite_exists:
-				request.urlretrieve ("https://sqlite.org/2017/sqlite-amalgamation-3160200.zip", "sqlite-amalgamation-3160200.zip")
-			zip_ref = zipfile.ZipFile('sqlite-amalgamation-3160200.zip', 'r')
+				request.urlretrieve (url_sqlite_source, name_local_zip)
+			zip_ref = zipfile.ZipFile(name_local_zip, 'r')
 			zip_ref.extractall('./')
 			zip_ref.close()
-			os.remove("sqlite-amalgamation-3160200.zip")
-			os.rename('sqlite-amalgamation-3160200', 'sqlite-source')
+			os.remove(name_local_zip)
+			os.rename(name_expected_folder_in_zip, name_desired_folder_source)
 
 		## downloading and configuring benchmark TPC-C
 		os.chdir(self.base_dir)
-		path_to_bm_zip = os.path.join(self.base_dir, 'py-tpcc-master.zip')
-		bm_exists = os.path.exists(os.path.join(self.base_dir, 'benchmark', 'pytpcc', 'tpcc.py'))
+		path_to_bm_zip = os.path.join(self.base_dir, name_local_zip_benchmarking_tool)
+		bm_exists = os.path.exists(os.path.join(
+			self.base_dir, name_desired_folder_benchmark,
+			name_expected_sub_folder_inside_benchmark,
+			name_expected_benchmark_file))
 		zip_bm_exists = os.path.exists(path_to_bm_zip)
-		self.bm_path = os.path.join(self.base_dir, 'benchmark')
-		bm_exec_path = os.path.join(self.bm_path, 'pytpcc')
-		self.bm_config_path = os.path.join(bm_exec_path, 'sqlite.config')
-		self.db_path = os.path.join(self.base_dir, 'sqlite_benchmark.db')
+		self.bm_path = os.path.join(self.base_dir, name_desired_folder_benchmark)
+		self.bm_exec_path = os.path.join(self.bm_path, name_expected_sub_folder_inside_benchmark)
+		self.bm_config_path = os.path.join(self.bm_exec_path, name_expected_benchmark_internal_config_file)
+		self.db_path = os.path.join(self.base_dir, name_local_bmk_db)
 
 		if not bm_exists:
 			print('Getting benchmark')
@@ -118,7 +138,9 @@ class SQLiteBenchmarker:
 		return c_result
 
 	def run_benchmark(self):
-		self.measurements = {}
+		if not hasattr(self.config, "measurements" ):
+			self.config["measurements"] = []
+		self.measurements = self.config["measurements"]
 		os.chdir(os.path.join(self.bm_path, 'pytpcc'))
 		os.system('python tpcc.py --print-config sqlite > ' + self.bm_config_path)
 		#adjust config
@@ -137,19 +159,23 @@ class SQLiteBenchmarker:
 								+ os.pathsep + os.environ["PATH"]
 		## start benchmark
 		print('starting benchmark')
-		self.measurements["start_human_readable"] = datetime.datetime.now().isoformat()
-		self.measurements["start"] = cur_milli()
-		print('##>>' + milli_str(self.measurements["start"]) + '>>') # print time in milliseconds
-
 		benchmark_command = "python tpcc.py --reset --config=sqlite.config sqlite --debug"
-		proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
-		(out, err) = proc.communicate()
-		#time.sleep(1)
-		self.measurements["finish"] = cur_milli()
-		print('##<<' + milli_str(self.measurements["finish"]) + '<<') # print time in milliseconds
-		self.measurements["cost_in_seconds"] = round((self.measurements["finish"] - self.measurements["start"])/100)/10
-		self.config["measurements"] = self.measurements
-		self.write_result()
+
+		for n in range(self.num_cycles):
+			self.current_measurement = {}
+			self.current_measurement["start_human_readable"] = datetime.datetime.now().isoformat()
+			self.current_measurement["start"] = cur_milli()
+			print('##>>' + milli_str(self.current_measurement["start"]) + '>>') # print time in milliseconds
+			proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
+			(out, err) = proc.communicate()
+			#time.sleep(1)
+			self.current_measurement["finish"] = cur_milli()
+			print('##<<' + milli_str(self.current_measurement["finish"]) + '<<') # print time in milliseconds
+			self.current_measurement["cost_in_seconds"] = round((self.current_measurement["finish"] - self.current_measurement["start"])/100)/10
+			self.config["measurements"].append(self.current_measurement)
+			self.write_result()
+			print("\f finished benchmark run #" + str(n))
+
 		print('__ benchmark finished __\n\n')
 
 	def write_result(self):
