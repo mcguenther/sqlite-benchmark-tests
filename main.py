@@ -54,7 +54,6 @@ def main(argv):
 	generator = ConfigCreator(base_dir=base_dir,options_file=options_file)
 	generator.generate_and_write_one_for_each_option()
 	generator.generate_set_randomly(int(num_random))
-
 	config_folder = os.path.join(base_dir, "compile-configs")
 	file_list = os.listdir(config_folder)
 	i = 1
@@ -70,6 +69,10 @@ def main(argv):
 			bmk.run_benchmark()
 		else:
 			continue
+
+
+	generator.write_all_in_one_config_file()
+	SQLiteBenchmarker.write_all_in_one_result_file_json(base_dir)
 
 
 def help_str():

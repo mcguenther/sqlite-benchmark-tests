@@ -9,6 +9,8 @@ import json
 import datetime
 import shutil
 import subprocess
+import xml.etree.cElementTree as ET
+import xml.dom.minidom as minidom
 
 def main(argv):
 	config_file = ''
@@ -123,15 +125,7 @@ class SQLiteBenchmarker:
 		## compile source
 		print('Compiling source')
 		os.chdir(os.path.join(self.base_dir, 'sqlite-source'))
-		compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
-		features = self.config["features"]
-		for option, value in features.items():
-			add_string = " -D"
-			if value is None:
-				add_string += option
-			else:
-				add_string += option + "=" + str(value)
-			compile_command += add_string
+		compile_command = SQLiteBenchmarker.get_compile_string(self.config["features"])
 		print("compiling: " + compile_command)
 		c_result = os.system(compile_command)
 		print('Finished compiling')
@@ -168,7 +162,7 @@ class SQLiteBenchmarker:
 			print('##>>' + milli_str(self.current_measurement["start"]) + '>>') # print time in milliseconds
 			proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
 			(out, err) = proc.communicate()
-			#time.sleep(1)
+			#time.sleep(0.1)
 			self.current_measurement["finish"] = cur_milli()
 			print('##<<' + milli_str(self.current_measurement["finish"]) + '<<') # print time in milliseconds
 			self.current_measurement["cost_in_seconds"] = round((self.current_measurement["finish"] - self.current_measurement["start"])/100)/10
@@ -186,11 +180,99 @@ class SQLiteBenchmarker:
 			f.truncate()
 
 
+
+	@staticmethod
+	def write_all_in_one_result_file_json(base_dir):
+		file_content = {}
+		results = []
+
+		config_folder = os.path.join(base_dir, 'compile-configs')
+		file_list = os.listdir(config_folder)
+
+		for filename in file_list:
+			abs_file = os.path.join(config_folder, filename)
+			with open(abs_file) as json_data:
+				config = json.load(json_data)
+				if "measurements" in config:
+					features = config["features"]
+					new_config = {}
+					config_id = SQLiteBenchmarker.get_id_from_config(features)
+					new_config["id"] = config_id
+					cmd = SQLiteBenchmarker.get_compile_string(features)
+					new_config["command"] = cmd
+
+					new_config["measurements"] = config["measurements"]
+					results.append(new_config)
+
+		file_content["results"] = results
+		with open(os.path.join(base_dir, 'all-in-one-results.json'), 'w') as f:
+			f.seek(0)
+			f.write(json.dumps(file_content, indent=4, sort_keys=True))
+			f.close()
+
+
+		# write a beautiful XML file
+		root = ET.Element("results")
+
+		for n in range(len(results)):
+			result = results[n]
+			result_node = ET.SubElement(root, "result", id=result["id"])
+			result_id_node = ET.SubElement(result_node, "id")
+			result_id_node.text = result["id"]
+			result_cmd_node = ET.SubElement(result_node, "command")
+			result_cmd_node.text = result["command"]
+
+			result_measurements_node = ET.SubElement(result_node, "measurements")
+			measurements = result["measurements"]
+			for i in range(len(measurements)):
+				measurement = measurements[i]
+				measurement_node = ET.SubElement(result_measurements_node, "measurement", id=str(i))
+				cost_in_seconds_node = ET.SubElement(measurement_node, "cost-in-seconds")
+				cost_in_seconds_node.text = str(measurement["cost_in_seconds"])
+				finish_node = ET.SubElement(measurement_node, "finish")
+				finish_node.text = str(measurement["finish"])
+				start_node = ET.SubElement(measurement_node, "start")
+				start_node.text = str(measurement["start"])
+				start_human_readable_node = ET.SubElement(measurement_node, "start-human-readable")
+				start_human_readable_node.text = str(measurement["start_human_readable"])
+
+		tree = ET.ElementTree(root)
+		xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
+		with open(os.path.join(base_dir, 'all-in-one-results.xml'), 'w') as f:
+			f.seek(0)
+			f.write(xmlstr)
+			f.close()
+
+	@staticmethod
+	def get_id_from_config(config):
+		id = "%;%"
+		for option, value in config.items():
+			if value is None:
+				add_string = option
+			else:
+				add_string = option + str(value)
+			id += add_string + "%;%"
+		return id
+
+	@staticmethod
+	def get_compile_string(features):
+		compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
+		for option, value in features.items():
+			add_string = " -D"
+			if value is None:
+				add_string += option
+			else:
+				add_string += option + "=" + str(value)
+			compile_command += add_string
+		return compile_command
+
 	@staticmethod
 	def clean(base_dir):
 		bmk_path = os.path.join(base_dir, 'benchmark')
 		src_path = os.path.join(base_dir, 'sqlite-source')
 		db_path = os.path.join(base_dir, 'sqlite_benchmark.db')
+		all_in_one_results_xml_path = os.path.join(base_dir, 'all-in-one-results.xml')
+		all_in_one_results_json_path = os.path.join(base_dir, 'all-in-one-results.json')
 		try:
 			if os.path.exists(bmk_path):
 				shutil.rmtree(bmk_path)
@@ -198,6 +280,10 @@ class SQLiteBenchmarker:
 				shutil.rmtree(src_path)
 			if os.path.exists(db_path):
 				os.remove(db_path)
+			if os.path.exists(all_in_one_results_xml_path):
+				os.remove(all_in_one_results_xml_path)
+			if os.path.exists(all_in_one_results_json_path):
+				os.remove(all_in_one_results_json_path)
 		except err:
 			print("Couldnt delete files.")
 

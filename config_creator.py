@@ -9,6 +9,8 @@ import json
 import datetime
 import random
 import shutil
+from sqlite_bmk import SQLiteBenchmarker
+
 
 def main(argv):
 	options_file = ''
@@ -190,13 +192,33 @@ class ConfigCreator:
 		rand_conf[option] = val
 		return rand_conf
 
+	def write_all_in_one_config_file(self):
+		file_content = ''
+		config_folder = os.path.join(self.base_dir, 'compile-configs')
+		file_list = os.listdir(config_folder)
+		file_num = len(file_list)
+		for filename in file_list:
+			abs_file = os.path.join(config_folder, filename)
+			with open(abs_file) as json_data:
+				config = json.load(json_data)
+				compile_command = SQLiteBenchmarker.get_compile_string(config["features"])
+				file_content += compile_command + "\n"
+
+		with open(os.path.join(self.base_dir, 'all-in-one.cfg'), 'w') as f:
+			f.seek(0)
+			f.write(file_content)
+			f.close()
+
 
 	@staticmethod
 	def clean(base_dir):
 		cfg_path = os.path.join(base_dir, 'compile-configs')
+		all_in_one_cmd_path = os.path.join(base_dir, 'all-in-one.cfg')
 		try:
 			if os.path.exists(cfg_path):
 				shutil.rmtree(cfg_path)
+			if os.path.exists(all_in_one_cmd_path):
+				os.remove(all_in_one_cmd_path)
 		except:
 			print("Couldnt delete files")
 
