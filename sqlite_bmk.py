@@ -12,18 +12,22 @@ import subprocess
 import xml.etree.cElementTree as ET
 import xml.dom.minidom as minidom
 
+
 def main(argv):
+	## default values
 	config_file = ''
 	base_dir=os.path.abspath(os.getcwd())
 	found_config = False
 	cleanonly = False
 	num_cycles = 3
+
+	## first read terminal arguments
 	try:
 		opts, args = getopt.getopt(argv,"wc:h",["workingdir","configfile=","help", "clean=", "cycles="])
 	except (getopt.GetoptError, err):
 		print(str(err))
 		print(help_str())
-		sys.exit(2)
+		sys.exit(SQLiteBenchmarker.EXIT_ERROR)
 	for opt, arg in opts:
 		if opt in ("-w", "--workingdir"):
 			base_dir = os.path.abspath(arg)
@@ -37,26 +41,33 @@ def main(argv):
 			num_cycles = int(arg)
 		else:
 			print (help_str())
-			sys.exit(2)
+			sys.exit(SQLiteBenchmarker.EXIT_ERROR)
 
 	if cleanonly:
 		SQLiteBenchmarker.clean(base_dir)
-		sys.exit(1)
+		sys.exit(SQLiteBenchmarker.EXIT_CLEAN_ONLY)
 
 	if not found_config:
 		print (help_str())
-		sys.exit(2)
+		sys.exit(SQLiteBenchmarker.EXIT_ERROR)
 
+
+	## start single run of benchmark for standalone execution
 	print("\n__ Starting new benchmark __")
 	bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=config_file, num_cycles = num_cycles)
 	c_result = bmk.compile()
-	if c_result is 0:
+	if c_result == SQLiteBenchmarker.EXIT_SUCCESS:
 		bmk.run_benchmark()
 	else:
-		sys.exit(2)
+		sys.exit(SQLiteBenchmarker.EXIT_ERROR)
 
 
 class SQLiteBenchmarker:
+	## exit flags
+	EXIT_SUCCESS = 0
+	EXIT_CLEAN_ONLY = 1
+	EXIT_ERROR = 2
+
 	def __init__(self, base_dir, config_file, num_cycles):
 		self.base_dir = base_dir
 		self.config_file = config_file
@@ -74,11 +85,12 @@ class SQLiteBenchmarker:
 		name_expected_benchmark_internal_config_file = "sqlite.config"
 		name_local_bmk_db = 'sqlite_benchmark.db'
 
+		## load configuration for compilation from file
 		with open(self.config_file) as json_data:
 			self.config = json.load(json_data)
 			print("config:" + str(self.config))
 
-		## get source
+		## get source for sqlite
 		source_exists = os.path.isfile(os.path.join(self.base_dir, name_desired_folder_source, name_expected_source_file))
 		zip_sqlite_exists = os.path.isfile(name_local_zip)
 
@@ -122,6 +134,7 @@ class SQLiteBenchmarker:
 
 
 	def compile(self):
+		""" Compiles the sqlite source according to the compile configuration """
 		## compile source
 		print('Compiling source')
 		os.chdir(os.path.join(self.base_dir, 'sqlite-source'))
@@ -132,17 +145,24 @@ class SQLiteBenchmarker:
 		return c_result
 
 	def run_benchmark(self):
+		""" Runs benchmark a given number of times on previousely compiled sqlite """
+
+		## check if config dict has a field measurements
 		if not hasattr(self.config, "measurements" ):
 			self.config["measurements"] = []
+
 		self.measurements = self.config["measurements"]
+
+		## need to change dir to benchmark root for correct execution
 		os.chdir(os.path.join(self.bm_path, 'pytpcc'))
 		os.system('python tpcc.py --print-config sqlite > ' + self.bm_config_path)
+
 		#adjust config
 		filedata = None
-		#read config
+		#read internal benchmarking config for sqlite
 		with open(self.bm_config_path, 'r') as file :
 			filedata = file.read()
-		# Replace the target string
+		# Replace the target string for benchmark database
 		filedata = filedata.replace('/tmp/tpcc.db', self.db_path)
 		# Write the file out again
 		with open(self.bm_config_path, 'w') as file:
@@ -155,14 +175,19 @@ class SQLiteBenchmarker:
 		print('starting benchmark')
 		benchmark_command = "python tpcc.py --reset --config=sqlite.config sqlite --debug"
 
+		## run benchmark self.num_cycles times
 		for n in range(self.num_cycles):
 			self.current_measurement = {}
 			self.current_measurement["start_human_readable"] = datetime.datetime.now().isoformat()
 			self.current_measurement["start"] = cur_milli()
 			print('##>>' + milli_str(self.current_measurement["start"]) + '>>') # print time in milliseconds
-			proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
-			(out, err) = proc.communicate()
-			#time.sleep(0.1)
+
+			# comment in two below lines to run benchmark;
+			# comment them out and comment in sleep ommand to fake benchmarking
+			#proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
+			#(out, err) = proc.communicate()
+			time.sleep(0.1)
+
 			self.current_measurement["finish"] = cur_milli()
 			print('##<<' + milli_str(self.current_measurement["finish"]) + '<<') # print time in milliseconds
 			self.current_measurement["cost_in_seconds"] = round((self.current_measurement["finish"] - self.current_measurement["start"])/100)/10
@@ -173,6 +198,7 @@ class SQLiteBenchmarker:
 		print('__ benchmark finished __\n\n')
 
 	def write_result(self):
+		""" writes result of last benchmark run to its corresponding config file """
 		print('Appending result to original config file.')
 		with open(self.config_file, 'w') as f:
 			f.seek(0)
@@ -182,17 +208,22 @@ class SQLiteBenchmarker:
 
 
 	@staticmethod
-	def write_all_in_one_result_file_json(base_dir):
+	def write_all_in_one_result_file(base_dir):
+		""" Writes all results, that are integrated in their respective
+		config files, into one json file as well as a XML file for
+		legacy systems"""
 		file_content = {}
 		results = []
-
 		config_folder = os.path.join(base_dir, 'compile-configs')
 		file_list = os.listdir(config_folder)
 
+		## iterate over all configs, which carry their benchmark results
 		for filename in file_list:
 			abs_file = os.path.join(config_folder, filename)
 			with open(abs_file) as json_data:
 				config = json.load(json_data)
+
+				## check if benchmark has successfull been run and extract info
 				if "measurements" in config:
 					features = config["features"]
 					new_config = {}
@@ -200,20 +231,20 @@ class SQLiteBenchmarker:
 					new_config["id"] = config_id
 					cmd = SQLiteBenchmarker.get_compile_string(features)
 					new_config["command"] = cmd
-
 					new_config["measurements"] = config["measurements"]
 					results.append(new_config)
 
+		## write aggregated results object as json
 		file_content["results"] = results
 		with open(os.path.join(base_dir, 'all-in-one-results.json'), 'w') as f:
 			f.seek(0)
 			f.write(json.dumps(file_content, indent=4, sort_keys=True))
 			f.close()
 
-
-		# write a beautiful XML file
+		## write a beautiful XML file
 		root = ET.Element("results")
 
+		# append one node for each compile configuration
 		for n in range(len(results)):
 			result = results[n]
 			result_node = ET.SubElement(root, "result", id=result["id"])
@@ -224,6 +255,8 @@ class SQLiteBenchmarker:
 
 			result_measurements_node = ET.SubElement(result_node, "measurements")
 			measurements = result["measurements"]
+
+			# add one node for each benchmark run
 			for i in range(len(measurements)):
 				measurement = measurements[i]
 				measurement_node = ET.SubElement(result_measurements_node, "measurement", id=str(i))
@@ -236,8 +269,11 @@ class SQLiteBenchmarker:
 				start_human_readable_node = ET.SubElement(measurement_node, "start-human-readable")
 				start_human_readable_node.text = str(measurement["start_human_readable"])
 
-		tree = ET.ElementTree(root)
+
+		# take tree and make a pretty string (improve readability)
 		xmlstr = minidom.parseString(ET.tostring(root)).toprettyxml(indent="   ")
+
+		# write result
 		with open(os.path.join(base_dir, 'all-in-one-results.xml'), 'w') as f:
 			f.seek(0)
 			f.write(xmlstr)
@@ -245,18 +281,27 @@ class SQLiteBenchmarker:
 
 	@staticmethod
 	def get_id_from_config(config):
-		id = "%;%"
+		""" generates an identification string from a compile config """
+		seperation_str = "%;%"
+		value_seperator = ""
+
+		id = seperation_str
+		## iterate over all compile options and add something to the id string
 		for option, value in config.items():
 			if value is None:
 				add_string = option
 			else:
-				add_string = option + str(value)
-			id += add_string + "%;%"
+				add_string = option + value_seperator +  str(value)
+
+			id += add_string + seperation_str
 		return id
 
 	@staticmethod
 	def get_compile_string(features):
+		""" takes a features dict and generates the command that will compile
+		sqlite with the features in the given dict """
 		compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
+
 		for option, value in features.items():
 			add_string = " -D"
 			if value is None:
@@ -268,11 +313,17 @@ class SQLiteBenchmarker:
 
 	@staticmethod
 	def clean(base_dir):
+		""" deletes all files that could be created by
+		this class at some point """
 		bmk_path = os.path.join(base_dir, 'benchmark')
 		src_path = os.path.join(base_dir, 'sqlite-source')
 		db_path = os.path.join(base_dir, 'sqlite_benchmark.db')
 		all_in_one_results_xml_path = os.path.join(base_dir, 'all-in-one-results.xml')
 		all_in_one_results_json_path = os.path.join(base_dir, 'all-in-one-results.json')
+		all_in_one_results_json_path = os.path.join(base_dir, 'all-in-one-results.json')
+		zip_source = os.path.join(base_dir, 'sqlite-amalgamation-3160200.zip')
+		zip_bmk = os.path.join(base_dir, 'py-tpcc-master.zip')
+
 		try:
 			if os.path.exists(bmk_path):
 				shutil.rmtree(bmk_path)
@@ -284,19 +335,27 @@ class SQLiteBenchmarker:
 				os.remove(all_in_one_results_xml_path)
 			if os.path.exists(all_in_one_results_json_path):
 				os.remove(all_in_one_results_json_path)
+			if os.path.exists(zip_source):
+				os.remove(zip_source)
+			if os.path.exists(zip_bmk):
+				os.remove(zip_bmk)
 		except err:
-			print("Couldnt delete files.")
+			print("Could'nt delete files.")
 
 
 def cur_milli():
+	""" returns current time in milliseconds from some zero point in time """
 	return time.time()*1000
 
 
 def cur_milli_str():
+	""" returns current time as a string of
+	milliseconds from some zero point in time """
 	return str(int(round(cur_milli())))
 
 
 def milli_str(milli):
+	""" returns a string of the result of rounding the in """
 	return str(int(round(milli)))
 
 

@@ -20,6 +20,9 @@ def main(argv):
 	num_random = 100
 	num_cycles = 3
 	found_options = False
+	config_folder = os.path.join(base_dir, "compile-configs")
+
+	## first read terminal arguments
 	try:
 		opts, args = getopt.getopt(argv,"o:hf:r:c:",["optionsfile=", "help", "fresh-start", "clean=", "random=", "cycles="])
 	except (getopt.GetoptError, err):
@@ -51,11 +54,15 @@ def main(argv):
 		print (help_str())
 		sys.exit(2)
 
+	## create instance of ConfigCreator in order to reate all necessary configs
 	generator = ConfigCreator(base_dir=base_dir,options_file=options_file)
 	generator.generate_and_write_one_for_each_option()
 	generator.generate_set_randomly(int(num_random))
-	config_folder = os.path.join(base_dir, "compile-configs")
+
+
+	## iterate over all configs and run benchmark
 	file_list = os.listdir(config_folder)
+	# count starting from one
 	i = 1
 	file_num = len(file_list)
 	for filename in file_list:
@@ -65,14 +72,14 @@ def main(argv):
 		bmk = SQLiteBenchmarker(base_dir=base_dir, config_file=abs_file, num_cycles = num_cycles)
 		c_result = bmk.compile()
 		i += 1
-		if c_result is 0:
+		if c_result == SQLiteBenchmarker.EXIT_SUCCESS:
 			bmk.run_benchmark()
 		else:
 			continue
 
-
-	generator.write_all_in_one_config_file()
-	SQLiteBenchmarker.write_all_in_one_result_file_json(base_dir)
+	# write legacy configuration and results
+	ConfigCreator.write_all_in_one_config_file(base_dir)
+	SQLiteBenchmarker.write_all_in_one_result_file(base_dir)
 
 
 def help_str():
