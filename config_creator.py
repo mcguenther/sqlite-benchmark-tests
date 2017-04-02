@@ -214,7 +214,7 @@ class ConfigCreator:
 			abs_file = os.path.join(config_folder, filename)
 			with open(abs_file) as json_data:
 				config = json.load(json_data)
-				compile_command = SQLiteBenchmarker.get_compile_string(config["features"])
+				compile_command = SQLiteBenchmarker.get_param_string(config["features"])
 				file_content += compile_command + "\n"
 
 		with open(os.path.join(base_dir, 'all-in-one.cfg'), 'w') as f:

@@ -84,6 +84,7 @@ class SQLiteBenchmarker:
 		name_expected_benchmark_file = "tpcc.py"
 		name_expected_benchmark_internal_config_file = "sqlite.config"
 		name_local_bmk_db = 'sqlite_benchmark.db'
+		gcc_compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
 
 		## load configuration for compilation from file
 		with open(self.config_file) as json_data:
@@ -184,9 +185,9 @@ class SQLiteBenchmarker:
 
 			# comment in two below lines to run benchmark;
 			# comment them out and comment in sleep ommand to fake benchmarking
-			#proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
-			#(out, err) = proc.communicate()
-			time.sleep(0.1)
+			proc = subprocess.Popen([benchmark_command], stdout=subprocess.PIPE, shell=True)
+			(out, err) = proc.communicate()
+			#time.sleep(0.1)
 
 			self.current_measurement["finish"] = cur_milli()
 			print('##<<' + milli_str(self.current_measurement["finish"]) + '<<') # print time in milliseconds
@@ -300,7 +301,21 @@ class SQLiteBenchmarker:
 	def get_compile_string(features):
 		""" takes a features dict and generates the command that will compile
 		sqlite with the features in the given dict """
-		compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
+		compile_command = gcc_compile_command
+
+		for option, value in features.items():
+			add_string = " -D"
+			if value is None:
+				add_string += option
+			else:
+				add_string += option + "=" + str(value)
+			compile_command += add_string
+		return compile_command
+
+	@staticmethod
+	def get_param_string(features):
+		""" takes a features dict and generates a string that contains the respective parameters """
+		compile_command = ""
 
 		for option, value in features.items():
 			add_string = " -D"
