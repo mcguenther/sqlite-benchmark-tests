@@ -1,37 +1,18 @@
 {
   "compile-options":{
-    "SQLITE_THREADSAFE": {
+    "SQLITE_THREADSAFE":  {
       "type": "list",
       "values": [0,1,2],
       "default": 1
     },
-    "SQLITE_DEFAULT_MEMSTATUS": {
+    "SQLITE_TEMP_STORE":  {
       "type": "list",
-      "values": [0,1],
+      "values": [0,1,2,3],
       "default": 1
     },
     "SQLITE_DEFAULT_PAGE_SIZE": {
       "type": "list",
-      "values": [512, 1024, 2048, 4096, 8192, 16384, 32768],
-      "default": 4096
-    },
-    "SQLITE_DEFAULT_WAL_SYNCHRONOUS": {
-      "type": "range",
-      "min": 0,
-      "max": 3,
-      "stepsize": 1,
-      "default": 2
-    },
-    "SQLITE_LIKE_DOESNT_MATCH_BLOBS": null,
-    "SQLITE_OMIT_DECLTYPE": null,
-    "SQLITE_OMIT_DEPRECATED": null,
-    "SQLITE_OMIT_PROGRESS_CALLBACK": null,
-    "SQLITE_OMIT_SHARED_CACHE": null,
-    "SQLITE_TEMP_STORE": {
-      "type": "range",
-      "min": 0,
-      "max": 3,
-      "stepsize": 1,
+      "values": [1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768],
       "default": 1
     },
     "SQLITE_ALLOW_COVERING_INDEX_SCAN": {
@@ -40,221 +21,95 @@
       "default": 1
     },
     "SQLITE_ENABLE_MEMORY_MANAGEMENT": null,
-    "SQLITE_OMIT_AUTOMATIC_INDEX": null,
-    "SQLITE_DEBUG": null,
-    "SQLITE_MEMDEBUG": null,
-    "SQLITE_DISABLE_LFS": null,
-    "SQLITE_ENABLE_API_ARMOR": null
-  },
-  "ommitted-options": {
-    "SQLITE_ALLOW_URI_AUTHORITY": null,
-    "SQLITE_ALLOW_COVERING_INDEX_SCAN": [0,1],
-    "SQLITE_ENABLE_8_3_NAMES": [1,2],
     "SQLITE_ENABLE_API_ARMOR": null,
-    "_HAVE_SQLITE_CONFIG_H":null,
-    "HAVE_FDATASYNC": null,
-    "HAVE_GMTIME_R": null,
-    "HAVE_ISNAN": null,
-    "HAVE_LOCALTIME_R": null,
-    "HAVE_LOCALTIME_S": null,
-    "HAVE_MALLOC_USABLE_SIZE": null,
-    "HAVE_STRCHRNUL": null,
-    "HAVE_USLEEP": null,
-    "HAVE_UTIME": null,
-    "SQLITE_BYTEORDER": [0,1234,4321],
-    "SQLITE_DEFAULT_AUTOMATIC_INDEX": [0,1],
-    "SQLITE_DEFAULT_AUTOVACUUM=": [0,1,2],
-    "SQLITE_DEFAULT_CACHE_SIZE=<N>": {
-      "min": -40000,
-      "max": 1,
-      "stepsize": 1
-    },
-    "SQLITE_DEFAULT_FILE_FORMAT": [1,4],
-
-    "SQLITE_DEFAULT_FOREIGN_KEYS": [0,1],
-    "SQLITE_DEFAULT_MMAP_SIZE=N": {
-      "max": 4092,
-      "min": 0,
-      "stepsize": 1
-    },
-    "SQLITE_DEFAULT_JOURNAL_SIZE_LIMIT=<bytes>": {
-      "max": 4092,
-      "min": 0,
-      "stepsize": 1
-    },
-    "SQLITE_DEFAULT_LOCKING_MODE": [0,1],
-    "SQLITE_DEFAULT_MEMSTATUS": [0,1],
-    "SQLITE_DEFAULT_PCACHE_INITSZ": {
-      "max": 4092,
-      "min": 0,
-      "stepsize": 1
-    },
-    "SQLITE_DEFAULT_PAGE_SIZE": {
-      "max": 8184,
-      "min": 0,
-      "stepsize": 1024
-    },
-    "SQLITE_DEFAULT_SYNCHRONOUS": [0,1,2,3],
-    "SQLITE_DEFAULT_WAL_SYNCHRONOUS": [0,1,2,3],
-    "SQLITE_DEFAULT_WAL_AUTOCHECKPOINT=<pages>": {
-      "max": 2000,
-      "min": 1,
-      "stepsize": 1
-    },
-    "SQLITE_DEFAULT_WORKER_THREADS": {
-      "max": 4,
-      "min": 0,
-      "stepsize": 1
-    },
-    "SQLITE_EXTRA_DURABLE": null,
-    "SQLITE_FTS3_MAX_EXPR_DEPTH": {
-      "max": 20,
-      "min": 1,
-      "stepsize": 1
-    },
-    "SQLITE_LIKE_DOESNT_MATCH_BLOBS": null,
-    "SQLITE_MAX_MMAP_SIZE=N": null,
-    "SQLITE_MAX_SCHEMA_RETRY=N": null,
-    "SQLITE_MAX_WORKER_THREADS=N": null,
-    "SQLITE_MINIMUM_FILE_DESCRIPTOR=N": null,
-    "SQLITE_POWERSAFE_OVERWRITE=<0 or 1>": null,
-    "SQLITE_REVERSE_UNORDERED_SELECTS": null,
-    "SQLITE_SORTER_PMASZ=N": null,
-    "SQLITE_STMTJRNL_SPILL=N": null,
-    "SQLITE_WIN32_MALLOC": null,
-    "YYSTACKDEPTH=<max_depth>": null,
-    "SQLITE_4_BYTE_ALIGNED_MALLOC": null,
-    "SQLITE_CASE_SENSITIVE_LIKE": null,
-    "SQLITE_DIRECT_OVERFLOW_READ": null,
-    "SQLITE_HAVE_ISNAN": null,
-    "SQLITE_OS_OTHER=<0 or 1>": null,
-    "SQLITE_SECURE_DELETE": null,
-    "SQLITE_THREADSAFE=<0 or 1 or 2>": null,
-    "SQLITE_TEMP_STORE=<0 through 3>": null,
-    "SQLITE_TRACE_SIZE_LIMIT=N": null,
-    "SQLITE_USE_URI": null,
-    "SQLITE_ALLOW_URI_AUTHORITY": null,
-    "SQLITE_ALLOW_COVERING_INDEX_SCAN=<0 or 1>": null,
-    "SQLITE_ENABLE_8_3_NAMES=<1 or 2>": null,
-    "SQLITE_ENABLE_API_ARMOR": null,
-    "SQLITE_ENABLE_ATOMIC_WRITE": null,
-    "SQLITE_ENABLE_COLUMN_METADATA": null,
     "SQLITE_ENABLE_DBSTAT_VTAB": null,
     "SQLITE_ENABLE_EXPLAIN_COMMENTS": null,
-    "SQLITE_ENABLE_FTS3": null,
     "SQLITE_ENABLE_FTS3_PARENTHESIS": null,
-    "SQLITE_ENABLE_FTS3_TOKENIZER": null,
-    "SQLITE_ENABLE_FTS4": null,
-    "SQLITE_ENABLE_FTS5": null,
-    "SQLITE_ENABLE_ICU": null,
-    "SQLITE_ENABLE_IOTRACE": null,
-    "SQLITE_ENABLE_JSON1": null,
-    "SQLITE_ENABLE_LOCKING_STYLE": null,
     "SQLITE_ENABLE_MEMORY_MANAGEMENT": null,
-    "SQLITE_ENABLE_MEMSYS3": null,
-    "SQLITE_ENABLE_MEMSYS5": null,
     "SQLITE_ENABLE_NULL_TRIM": null,
     "SQLITE_ENABLE_PREUPDATE_HOOK": null,
-    "SQLITE_ENABLE_RBU": null,
     "SQLITE_ENABLE_RTREE": null,
-    "SQLITE_ENABLE_SESSION": null,
     "SQLITE_ENABLE_STMT_SCANSTATUS": null,
-    "SQLITE_RTREE_INT_ONLY": null,
-    "SQLITE_ENABLE_SQLLOG": null,
-    "SQLITE_ENABLE_STAT2": null,
-    "SQLITE_ENABLE_STAT3": null,
-    "SQLITE_ENABLE_STAT4": null,
-    "SQLITE_ENABLE_TREE_EXPLAIN": null,
-    "SQLITE_ENABLE_UPDATE_DELETE_LIMIT": null,
-    "SQLITE_ENABLE_UNKNOWN_SQL_FUNCTION": null,
-    "SQLITE_ENABLE_UNLOCK_NOTIFY": null,
-    "SQLITE_SOUNDEX": null,
-    "SQLITE_USE_FCNTL_TRACE": null,
-    "YYTRACKMAXSTACKDEPTH": null,
-    "SQLITE_DISABLE_LFS": null,
-    "SQLITE_DISABLE_DIRSYNC": null,
-    "SQLITE_DISABLE_FTS3_UNICODE": null,
-    "SQLITE_DISABLE_FTS4_DEFERRED": null,
-    "SQLITE_DISABLE_INTRINSIC": null,
-    "SQLITE_OMIT_ALTERTABLE": null,
-    "SQLITE_OMIT_ANALYZE": null,
-    "SQLITE_OMIT_ATTACH": null,
-    "SQLITE_OMIT_AUTHORIZATION": null,
-    "SQLITE_OMIT_AUTOINCREMENT": null,
-    "SQLITE_OMIT_AUTOINIT": null,
-    "SQLITE_OMIT_AUTOMATIC_INDEX": null,
-    "SQLITE_OMIT_AUTORESET": null,
-    "SQLITE_OMIT_AUTOVACUUM": null,
-    "SQLITE_OMIT_BETWEEN_OPTIMIZATION": null,
-    "SQLITE_OMIT_BLOB_LITERAL": null,
-    "SQLITE_OMIT_BTREECOUNT": null,
-    "SQLITE_OMIT_BUILTIN_TEST": null,
-    "SQLITE_OMIT_CAST": null,
-    "SQLITE_OMIT_CHECK": null,
-    "SQLITE_OMIT_COMPILEOPTION_DIAGS": null,
-    "SQLITE_OMIT_COMPLETE": null,
-    "SQLITE_OMIT_COMPOUND_SELECT": null,
-    "SQLITE_OMIT_CTE": null,
-    "SQLITE_OMIT_DATETIME_FUNCS": null,
-    "SQLITE_OMIT_DECLTYPE": null,
-    "SQLITE_OMIT_DEPRECATED": null,
-    "SQLITE_OMIT_DISKIO": null,
-    "SQLITE_OMIT_EXPLAIN": null,
-    "SQLITE_OMIT_FLAG_PRAGMAS": null,
-    "SQLITE_OMIT_FLOATING_POINT": null,
-    "SQLITE_OMIT_FOREIGN_KEY": null,
-    "SQLITE_OMIT_GET_TABLE": null,
-    "SQLITE_OMIT_INCRBLOB": null,
-    "SQLITE_OMIT_INTEGRITY_CHECK": null,
-    "SQLITE_OMIT_LIKE_OPTIMIZATION": null,
-    "SQLITE_OMIT_LOAD_EXTENSION": null,
-    "SQLITE_OMIT_LOCALTIME": null,
-    "SQLITE_OMIT_LOOKASIDE": null,
-    "SQLITE_OMIT_MEMORYDB": null,
-    "SQLITE_OMIT_OR_OPTIMIZATION": null,
-    "SQLITE_OMIT_PAGER_PRAGMAS": null,
-    "SQLITE_OMIT_PRAGMA": null,
-    "SQLITE_OMIT_PROGRESS_CALLBACK": null,
-    "SQLITE_OMIT_QUICKBALANCE": null,
-    "SQLITE_OMIT_REINDEX": null,
-    "SQLITE_OMIT_SCHEMA_PRAGMAS": null,
-    "SQLITE_OMIT_SCHEMA_VERSION_PRAGMAS": null,
-    "SQLITE_OMIT_SHARED_CACHE": null,
-    "SQLITE_OMIT_SUBQUERY": null,
-    "SQLITE_OMIT_TCL_VARIABLE": null,
-    "SQLITE_OMIT_TEMPDB": null,
-    "SQLITE_OMIT_TRACE": null,
-    "SQLITE_OMIT_TRIGGER": null,
-    "SQLITE_OMIT_TRUNCATE_OPTIMIZATION": null,
-    "SQLITE_OMIT_UTF16": null,
-    "SQLITE_OMIT_VACUUM": null,
-    "SQLITE_OMIT_VIEW": null,
-    "SQLITE_OMIT_VIRTUALTABLE": null,
-    "SQLITE_OMIT_WAL": null,
-    "SQLITE_OMIT_WSD": null,
-    "SQLITE_OMIT_XFER_OPT": null,
-    "SQLITE_UNTESTABLE": null,
-    "SQLITE_ZERO_MALLOC": null,
+    "SQLITE_USE_URI": null,
     "SQLITE_DEBUG": null,
     "SQLITE_MEMDEBUG": null,
-    "SQLITE_WIN32_HEAP_CREATE": null,
-    "SQLITE_WIN32_MALLOC_VALIDATE": null,
-    "SQLITE_API": null,
-    "SQLITE_APICALL": null,
-    "SQLITE_CALLBACK": null,
-    "SQLITE_CDECL": null,
-    "SQLITE_SYSCALL": null,
-    "SQLITE_TCLAPI": null,
-    "SQLITE_DEFAULT_FILE_PERMISSIONS=N": null,
-    "SQLITE_DEFAULT_LOOKASIDE=SZ,N": null,
-    "SQLITE_MAX_EXPR_DEPTH=0": {
+    "SQLITE_ALLOW_URI_AUTHORITY": null,
+    "SQLITE_DEFAULT_MEMSTATUS": {
+      "type": "list",
+      "values": [0,1],
+      "default": 1
+    },
+    "SQLITE_OMIT_AUTOMATIC_INDEX": null,
+    "SQLITE_DEFAULT_SYNCHRONOUS": {
+      "type": "list",
+      "values": [0,1,2,3],
+      "default": 2
+    },
+    "SQLITE_DEFAULT_AUTOVACUUM": {
+      "type": "list",
+      "values": [0,1,2],
+      "default": 0
+    },
+    "SQLITE_DEFAULT_FILE_FORMAT": {
+      "type": "list",
+      "values": [1,4],
+      "default": 4
+    },
+    "SQLITE_DEFAULT_LOCKING_MODE": {
+      "type": "list",
+      "values": [1,0],
+      "default": 0
+    },
+    "SQLITE_DEFAULT_MEMSTATUS": {
+      "type": "list",
+      "values": [1,0],
+      "default": 1
+    },
+    "SQLITE_POWERSAFE_OVERWRITE": {
+      "type": "list",
+      "values": [1,0],
+      "default": 1
+    },
+    "SQLITE_OMIT_SHARED_CACHE": null,
+    "SQLITE_OMIT_PROGRESS_CALLBACK": null,
+    "SQLITE_OMIT_DECLTYPE": null,
+    "SQLITE_MAX_EXPR_DEPTH": {
       "type": "range",
       "min": 0,
-      "max": 4000,
+      "max": 10000000,
+      "stepsize": 500000,
+      "default": 0
+    },
+    "SQLITE_DEFAULT_WAL_AUTOCHECKPOINT": {
+      "type": "range",
+      "min": 1,
+      "max": 100000,
       "stepsize": 100,
       "default": 1000
     },
-    "SQLITE_ENABLE_SESSION": null
+    "SQLITE_DEFAULT_JOURNAL_SIZE_LIMIT": {
+      "type": "range",
+      "min": -1,
+      "max": 8000000000,
+      "stepsize": 50000,
+      "default": -1
+    },
+    "SQLITE_DEFAULT_MMAP_SIZE": {
+      "type": "range",
+      "min": 0,
+      "max": 4000,
+      "stepsize": 500,
+      "default": 1000
+    },
+    "SQLITE_LIKE_DOESNT_MATCH_BLOBS": null,
+    "SQLITE_CASE_SENSITIVE_LIKE": null,
+    "SQLITE_DIRECT_OVERFLOW_READ": null,
+    "SQLITE_SECURE_DELETE": null,
+    "SQLITE_DEFAULT_WAL_SYNCHRONOUS": {
+      "type": "list",
+      "values": [0,1,2,3],
+      "default": 2
+    }
   }
 
 }

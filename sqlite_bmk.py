@@ -68,23 +68,26 @@ class SQLiteBenchmarker:
 	EXIT_CLEAN_ONLY = 1
 	EXIT_ERROR = 2
 
+
+	GCC_COMPILE_COMMAND = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
+
+	URL_SQLITE_SOURCE = "https://sqlite.org/2017/sqlite-amalgamation-3160200.zip"
+	NAME_LOCAL_ZIP = "sqlite-amalgamation-3160200.zip"
+	NAME_EXPECTED_FOLDER_IN_ZIP = 'sqlite-amalgamation-3160200'
+	NAME_DESIRED_FOLDER_SOURCE = 'sqlite-source'
+	NAME_EXPECTED_SOURCE_FILE = 'sqlite3.c'
+	NAME_LOCAL_ZIP_BENCHMARKING_TOOL = "py-tpcc-master.zip"
+	NAME_DESIRED_FOLDER_BENCHMARK = "benchmark"
+	NAME_EXPECTED_SUB_FOLDER_INSIDE_BENCHMARK = "pytpcc"
+	NAME_EXPECTED_BENCHMARK_FILE = "tpcc.py"
+	NAME_EXPECTED_BENCHMARK_INTERNAL_CONFIG_FILE = "sqlite.config"
+	NAME_LOCAL_BMK_DB = 'sqlite_benchmark.db'
+
+
 	def __init__(self, base_dir, config_file, num_cycles):
 		self.base_dir = base_dir
 		self.config_file = config_file
 		self.num_cycles = num_cycles
-
-		url_sqlite_source = "https://sqlite.org/2017/sqlite-amalgamation-3160200.zip"
-		name_local_zip = "sqlite-amalgamation-3160200.zip"
-		name_expected_folder_in_zip = 'sqlite-amalgamation-3160200'
-		name_desired_folder_source = 'sqlite-source'
-		name_expected_source_file = 'sqlite3.c'
-		name_local_zip_benchmarking_tool = "py-tpcc-master.zip"
-		name_desired_folder_benchmark = "benchmark"
-		name_expected_sub_folder_inside_benchmark = "pytpcc"
-		name_expected_benchmark_file = "tpcc.py"
-		name_expected_benchmark_internal_config_file = "sqlite.config"
-		name_local_bmk_db = 'sqlite_benchmark.db'
-		gcc_compile_command = "gcc -o sqlite3 shell.c sqlite3.c -lpthread -ldl"
 
 		## load configuration for compilation from file
 		with open(self.config_file) as json_data:
@@ -92,31 +95,31 @@ class SQLiteBenchmarker:
 			print("config:" + str(self.config))
 
 		## get source for sqlite
-		source_exists = os.path.isfile(os.path.join(self.base_dir, name_desired_folder_source, name_expected_source_file))
-		zip_sqlite_exists = os.path.isfile(name_local_zip)
+		source_exists = os.path.isfile(os.path.join(self.base_dir, SQLiteBenchmarker.NAME_DESIRED_FOLDER_SOURCE, SQLiteBenchmarker.NAME_EXPECTED_SOURCE_FILE))
+		zip_sqlite_exists = os.path.isfile(SQLiteBenchmarker.NAME_LOCAL_ZIP)
 
 		if not source_exists:
 			print('Getting sqlite source')
 			if not zip_sqlite_exists:
-				request.urlretrieve (url_sqlite_source, name_local_zip)
-			zip_ref = zipfile.ZipFile(name_local_zip, 'r')
+				request.urlretrieve (SQLiteBenchmarker.SQLiteBenchmarker.URL_SQLITE_SOURCE, SQLiteBenchmarker.NAME_LOCAL_ZIP)
+			zip_ref = zipfile.ZipFile(SQLiteBenchmarker.NAME_LOCAL_ZIP, 'r')
 			zip_ref.extractall('./')
 			zip_ref.close()
-			os.remove(name_local_zip)
-			os.rename(name_expected_folder_in_zip, name_desired_folder_source)
+			os.remove(SQLiteBenchmarker.NAME_LOCAL_ZIP)
+			os.rename(SQLiteBenchmarker.NAME_EXPECTED_FOLDER_IN_ZIP, SQLiteBenchmarker.NAME_DESIRED_FOLDER_SOURCE)
 
 		## downloading and configuring benchmark TPC-C
 		os.chdir(self.base_dir)
-		path_to_bm_zip = os.path.join(self.base_dir, name_local_zip_benchmarking_tool)
+		path_to_bm_zip = os.path.join(self.base_dir, SQLiteBenchmarker.NAME_LOCAL_ZIP_BENCHMARKING_TOOL)
 		bm_exists = os.path.exists(os.path.join(
-			self.base_dir, name_desired_folder_benchmark,
-			name_expected_sub_folder_inside_benchmark,
-			name_expected_benchmark_file))
+			self.base_dir, SQLiteBenchmarker.NAME_DESIRED_FOLDER_BENCHMARK,
+			SQLiteBenchmarker.NAME_EXPECTED_SUB_FOLDER_INSIDE_BENCHMARK,
+			SQLiteBenchmarker.NAME_EXPECTED_BENCHMARK_FILE))
 		zip_bm_exists = os.path.exists(path_to_bm_zip)
-		self.bm_path = os.path.join(self.base_dir, name_desired_folder_benchmark)
-		self.bm_exec_path = os.path.join(self.bm_path, name_expected_sub_folder_inside_benchmark)
-		self.bm_config_path = os.path.join(self.bm_exec_path, name_expected_benchmark_internal_config_file)
-		self.db_path = os.path.join(self.base_dir, name_local_bmk_db)
+		self.bm_path = os.path.join(self.base_dir, SQLiteBenchmarker.NAME_DESIRED_FOLDER_BENCHMARK)
+		self.bm_exec_path = os.path.join(self.bm_path, SQLiteBenchmarker.NAME_EXPECTED_SUB_FOLDER_INSIDE_BENCHMARK)
+		self.bm_config_path = os.path.join(self.bm_exec_path, SQLiteBenchmarker.NAME_EXPECTED_BENCHMARK_INTERNAL_CONFIG_FILE)
+		self.db_path = os.path.join(self.base_dir, SQLiteBenchmarker.NAME_LOCAL_BMK_DB)
 
 		if not bm_exists:
 			print('Getting benchmark')
@@ -301,7 +304,7 @@ class SQLiteBenchmarker:
 	def get_compile_string(features):
 		""" takes a features dict and generates the command that will compile
 		sqlite with the features in the given dict """
-		compile_command = gcc_compile_command
+		compile_command = SQLiteBenchmarker.GCC_COMPILE_COMMAND
 
 		for option, value in features.items():
 			add_string = " -D"

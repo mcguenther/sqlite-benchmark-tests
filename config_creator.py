@@ -65,6 +65,8 @@ class ConfigCreator:
 	EXIT_CLEAN_ONLY = 1
 	EXIT_ERROR = 2
 
+	JSON_INDENT = 4
+
 	def __init__(self, base_dir, options_file):
 		self.base_dir = base_dir
 		self.options_file = options_file
@@ -130,7 +132,7 @@ class ConfigCreator:
 		config_folder = os.path.join(self.base_dir, 'compile-configs')
 		config_folder_exists = os.path.exists(config_folder)
 
-		json_conf = json.dumps(config_wrapper, indent=4, sort_keys=True)
+		json_conf = json.dumps(config_wrapper, ConfigCreator.JSON_INDENT, sort_keys=True)
 
 		if not config_folder_exists:
 			os.mkdir(config_folder)
