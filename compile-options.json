@@ -10,11 +10,6 @@
       "values": [0,1,2,3],
       "default": 1
     },
-    "SQLITE_DEFAULT_PAGE_SIZE": {
-      "type": "list",
-      "values": [1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768],
-      "default": 1
-    },
     "SQLITE_ALLOW_COVERING_INDEX_SCAN": {
       "type": "list",
       "values": [0,1],
