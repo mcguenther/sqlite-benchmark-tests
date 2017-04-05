@@ -101,7 +101,7 @@ class SQLiteBenchmarker:
 		if not source_exists:
 			print('Getting sqlite source')
 			if not zip_sqlite_exists:
-				request.urlretrieve (SQLiteBenchmarker.SQLiteBenchmarker.URL_SQLITE_SOURCE, SQLiteBenchmarker.NAME_LOCAL_ZIP)
+				request.urlretrieve (SQLiteBenchmarker.URL_SQLITE_SOURCE, SQLiteBenchmarker.NAME_LOCAL_ZIP)
 			zip_ref = zipfile.ZipFile(SQLiteBenchmarker.NAME_LOCAL_ZIP, 'r')
 			zip_ref.extractall('./')
 			zip_ref.close()
